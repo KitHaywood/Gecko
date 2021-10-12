@@ -1,0 +1,19 @@
+AIM
+
+The aim of this project is to create a standalone automated systematic trading algorithm and execution engine which will:
+
+STAGE 1
+
+1) Use json historic priciung data of a growing number of cryptocurrencies as a base for backtesting
+2) Continuously update the json data with the latest figure with a maximum latency of 1min
+3) Perform optimisation analysis of the best curve fits for each crypto, which define maxima and minima, and then store these results continuously for analysis day on day.
+4) Correlate the fitted curve with EMA/SMA backtested profiles and store results for subsequent analysis
+5) Define its own strategies for specific cryptos or combinations thereon and backtest to validate
+6) Analyse the movement in crypto prices wrt to the fitted curve, EMA/SMA Cross backtests and where both signal pending price action - send market orders an exchange and buy/sell.
+7) Watch the open positions and exit when the momentum fades.
+
+STAGE 2 
+
+1) Write Twitter Developer api link to retrieve data on people of importance to each crypto, and store results. 
+2) Integrate the results of NLP on these people into the momentum cross model and correlate tweet content/viewership/comment content with price action. 
+
