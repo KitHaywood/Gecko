@@ -14,6 +14,7 @@ import tqdm
 import os
 from utils import date_range_lister
 
+# TODO - Write the dox uuuhhhhhh
 # TODO - Go back and use market_chart_range to get 
  
 class Gecko:
