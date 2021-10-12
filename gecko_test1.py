@@ -1,6 +1,12 @@
-from pycoingecko import CoinGeckoAPI
+try:
+    from pycoingecko import CoinGeckoAPI
+except ImportError:
+    print('please install pycoingecko in the CLI')
 import datetime as dt
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    print('please install pandas in the CLI'')
 import time
 import requests
 import json
