@@ -11,6 +11,7 @@ import time
 import requests
 import json
 import tqdm
+import sys
 import os
 from utils import date_range_lister
 
@@ -102,19 +103,29 @@ class Gecko:
         with open(f"{crypto}.json",'r') as f_in:
             data = json.loads(json.load(f_in))
         return pd.DataFrame.from_dict(data['data'])
-
-if __name__=="__main__":
-    cryptos = ['cardano','usd-coin'] # Change this to the IDs of what you want to retrieve
+    
+def main():
+    if sys.argv[0]=='main.py':
+        if len(sys.argv[1:])>0: # USER DEFINED
+            print('\n',f"CLI cryptos passed, getting --> {', '.join([x.upper() for x in list(sys.argv[1:])])}",'\n')
+            cryptos = list([x.lower() for x in sys.argv[1:]])
+        else:
+            cryptos = ['cardano','usd-coin'] # DEFAULTS
+            print('\n',"No CLI cryptos passed, using default {} , {} ".format(
+                str(cryptos[0]).upper(),
+                str(cryptos[1]).upper()
+                ),'\n')
+    else:
+        pass
 
     gck = Gecko()
-
     for crypto in tqdm.tqdm(cryptos):
-        print('\n',crypto,'\n')
-
         data = gck.write_to_json(crypto,'usd')
         with open(f'{crypto}.json','w') as f:
-            json.dump(data.to_json(orient='split',date_format='iso'),f)        
-       
-    # xx = gck.write_to_json('ethereum','usd')
-    # with open('test_eth_1.json','w') as f:
-    #     json.dump(xx.to_json(orient='split',date_format='iso'),f)        
+            json.dump(data.to_json(orient='split',date_format='iso'),f)
+    return 0    
+
+if __name__=="__main__":
+    main = main()
+    if main==0:
+        print('\n','Program Executed Successfully','\n')
