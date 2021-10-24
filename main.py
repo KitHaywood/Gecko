@@ -19,15 +19,26 @@ from utils import date_range_lister
 # TODO - Go back and use market_chart_range to get 
  
 class Gecko:
-    
-    def __init__(self) -> None:
+    """
+    Class for interaction with CoinGecko API for data retreival and json write
+    """
+    def __init__(self):
         self.cg = CoinGeckoAPI()
-
+        return None
 
     def get_all_coins(self):
+        """returns list of crypto instruments in CoinGecko"""
         return self.cg.get_coins_list()
     
     def get_market_data(self,symbol,currency,days):
+        """
+        PARAMETERS: 
+        crypto-id(symbol) --> str (see CoinGecko dox for crypto-ids)
+        currency          --> str (industry standard for sovereign currency, i.e. 'usd')
+        data resoltion    --> '1','14','30','max'
+        
+        RETURNS: DataFrame
+        """
         base_url = f'https://api.coingecko.com/api/v3/coins/{symbol}/market_chart?vs_currency={currency}&days={days}'
         response = requests.get(base_url)
         res = response.json()
@@ -75,7 +86,7 @@ class Gecko:
         return df
     
     def write_to_json(self,crypto,currency):
-        # NOT WORKING YET - JUST SCRIBBLING
+        # NOT WORKING YET - JUST SCRIBBLING 
         dates = date_range_lister()
         tracker = {}
         tracker[crypto] = {}
@@ -91,6 +102,11 @@ class Gecko:
                     print(dates[i],dates[i-1])
                     tracker[crypto][dates[i]]=[dates[i],dates[i-1]]
             time.sleep(1.2)
+        if isinstance(res,pd.DataFrame):
+            with open(f'{crypto}.json','w') as f:
+                json.dump(res.to_json(orient='split',date_format='iso'),f)
+        else:
+            print('self.get_data_on_interval returned incorrect datatype')
         return res
     
     def load_from_json(self,crypto):
@@ -121,8 +137,6 @@ def main():
     gck = Gecko()
     for crypto in tqdm.tqdm(cryptos):
         data = gck.write_to_json(crypto,'usd')
-        with open(f'{crypto}.json','w') as f:
-            json.dump(data.to_json(orient='split',date_format='iso'),f)
     return 0    
 
 if __name__=="__main__":
