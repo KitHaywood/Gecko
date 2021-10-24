@@ -6,7 +6,7 @@ import datetime as dt
 try:
     import pandas as pd
 except ImportError:
-    print('please install pandas in the CLI'')
+     print('please install pandas in the CLI')
 import time
 import requests
 import json
@@ -68,7 +68,6 @@ class Gecko:
         base_url = f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency={currency}&from={from_date}&to={to_date}"
         response = requests.get(base_url)
         res = response.json()
-        print(res)
         data = res['prices']
         data = [[dt.datetime.fromtimestamp(x[0]/1000),x[1]] for x in data]
         df = pd.DataFrame(data)
@@ -94,6 +93,12 @@ class Gecko:
         return res
     
     def load_from_json(self,crypto):
+        """
+        Parameters: str --> crypto ID as listed in CoinGeckoAPI
+        
+        Returns: DataFrame of loaded data from JSON
+        
+        """
         with open(f"{crypto}.json",'r') as f_in:
             data = json.loads(json.load(f_in))
         return pd.DataFrame.from_dict(data['data'])
