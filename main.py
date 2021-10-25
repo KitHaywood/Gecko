@@ -5,7 +5,7 @@ except ImportError:
 import datetime as dt
 try:
     import pandas as pd
-except ImportError:
+except ImportError: 
      print('please install pandas in the CLI')
 import time
 import requests
@@ -136,7 +136,7 @@ def main():
 
     gck = Gecko()
     for crypto in tqdm.tqdm(cryptos):
-        data = gck.write_to_json(crypto,'usd')
+        gck.write_to_json(crypto,'usd')
     return 0    
 
 if __name__=="__main__":
