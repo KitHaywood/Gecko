@@ -14,8 +14,11 @@ import tqdm
 import sys
 import os
 from utils import date_range_lister
+from scipy.optimize import curve_fit
+import matplotlib.dates as mdates
 
 # TODO - Write the dox uuuhhhhhh
+# TODO - Write func to update data on increment
 # TODO - Go back and use market_chart_range to get 
  
 class Gecko:
@@ -120,7 +123,7 @@ class Gecko:
             data = json.loads(json.load(f_in))
         return pd.DataFrame.from_dict(data['data'])
     
-def main():
+def gck_main():
     if sys.argv[0]=='main.py':
         if len(sys.argv[1:])>0: # USER DEFINED
             print('\n',f"CLI cryptos passed, getting --> {', '.join([x.upper() for x in list(sys.argv[1:])])}",'\n')
@@ -139,7 +142,37 @@ def main():
         gck.write_to_json(crypto,'usd')
     return 0    
 
+class Strategy:
+    
+    def __init__(self) -> None:
+        pass
+
+    def load_data(self,crypto):
+        with open(f'data\{crypto}.json') as f:
+            data = json.loads(json.load(f))
+        return pd.DataFrame.from_dict(data['data'])
+    
+    def fit_curve(self,data,window):
+        """
+        returns: function with fitted_curve
+        """
+        def objective(x,a,b,c,d,e,f):
+            return (a * x) + (b * x**2) + (c * x**3) + (d * x**4) + (e * x**5) + f
+
+        popt,_ = curve_fit(objective,mdates.date2num(data[0].iloc[-window:]),data[1].iloc[-window:])
+        x_line = np.arange(min(data[0].iloc[-window:]),max(data[0].iloc[-window:]),1)
+        yline = objective(x_line,a,b,c,d,e,f)
+        return 
+
+    
+
+
+
+
 if __name__=="__main__":
-    main = main()
-    if main==0:
-        print('\n','Program Executed Successfully','\n')
+    # main = gck_main()
+    # if main==0:
+    #     print('\n','Program Executed Successfully','\n')
+    s = Strategy()
+    data = Strategy().load_data('ethereum')
+    print(s.fit_curve(data,50))

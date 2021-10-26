@@ -22,6 +22,5 @@ class TestDataType(unittest.TestCase):
         self.assertIsInstance(Gecko().get_all_coins(),list)
 
 
-
 if __name__=="__main__":
     unittest.main()
