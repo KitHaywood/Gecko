@@ -1,5 +1,5 @@
 import unittest
-
+import Gecko.main
 # Prelim Unit Testing
 
 class TestDataType(unittest.TestCase):
