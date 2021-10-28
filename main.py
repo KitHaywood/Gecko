@@ -14,6 +14,7 @@ import tqdm
 import sys
 import os
 from utils import date_range_lister
+import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.dates as mdates
 
@@ -148,23 +149,64 @@ class Strategy:
         pass
 
     def load_data(self,crypto):
-        with open(f'data\{crypto}.json') as f:
+        with open(f'{crypto}.json') as f:
             data = json.loads(json.load(f))
         return pd.DataFrame.from_dict(data['data'])
     
-    def fit_curve(self,data,window):
+    def fit_curve_fourier(self,data,window):
         """
         returns: function with fitted_curve
         """
-        def objective(x,a,b,c,d,e,f):
-            return (a * x) + (b * x**2) + (c * x**3) + (d * x**4) + (e * x**5) + f
+        def fourier_series(x, f, n=0):
+            """
+            Returns a symbolic fourier series of order `n`.
 
-        popt,_ = curve_fit(objective,mdates.date2num(data[0].iloc[-window:]),data[1].iloc[-window:])
-        x_line = np.arange(min(data[0].iloc[-window:]),max(data[0].iloc[-window:]),1)
-        yline = objective(x_line,a,b,c,d,e,f)
-        return 
+            :param n: Order of the fourier series.
+            :param x: Independent variable
+            :param f: Frequency of the fourier series
+            """
+            # Make the parameter objects for all the terms
+            a0, *cos_a = parameters(','.join(['a{}'.format(i) for i in range(0, n + 1)])) # check range 0-->
+            sin_b = parameters(','.join(['b{}'.format(i) for i in range(1, n + 1)])) # check range 1-->
+            # Construct the series
+            series = a0 + sum(ai * cos(i * f * x) + bi * sin(i * f * x)
+                            for i, (ai, bi) in enumerate(zip(cos_a, sin_b), start=1))
 
+            return series
+
+        def fitter(data,window,degree):
+            self.window = window
+            x,y = variables('x,y') # sets up variable for symfit object
+            model_dict = {y: fourier_series(x,4,n=degree)} # required output format 
+            data['dates'] = [dt.datetime.strptime(x,"%Y-%m-%dT%H:%M:%S.%fZ") for x in data[0]]
+            self.x_data = data['dates'].iloc[-self.window:].apply(lambda x: mdates.date2num(x)) # sort the dates out
+            self.y_data = data[1].iloc[-window:] # trim dataset to window size
+            fit = Fit(model_dict,x=self.x_data,y=self.y_data) # create fit object
+            fit_result = fit.execute()
+            y_hat = fit.model(x=self.x_data,**fit_result.params).y
+            return fit_result,y_hat
     
+        self.res = {}
+        for i in range(3,11,1): # Want to optimize on this
+            self.res[f"{i}_result"] = fitter(data,250,i)[0]
+            self.res[f"{i}_yhat"] = fitter(data,250,i)[1]
+        return self.res
+
+    def plot_result(self):
+        if self.window != 0:
+            new_res = np.array([self.res[f"{k.split('_')[0]}_yhat"] for k,v in self.res.items()])
+            mean = np.mean(new_res,axis=0)         
+            fig = plt.figure(figsize=(20,10))
+            ax = fig.add_subplot(111)
+            for k,v in self.res.items():
+                ax.plot(self.x_data,self.res[f"{k.split('_')[0]}_yhat"],alpha=0.1,color='k')
+            ax.plot(self.x_data,self.y_data)
+            ax.plot(self.x_data,mean)
+            ax.plot(self.x_data,self.y_data.rolling(20).mean())
+            ax.grid
+        else:
+            print('Window must be > 0')
+        return fig
 
 
 
@@ -175,4 +217,5 @@ if __name__=="__main__":
     #     print('\n','Program Executed Successfully','\n')
     s = Strategy()
     data = Strategy().load_data('ethereum')
-    print(s.fit_curve(data,50))
+    fit = s.fit_curve_fourier(data,250)
+    s.plot_result()

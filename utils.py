@@ -9,6 +9,12 @@ def date_range_lister():
     dates = [int(x.timestamp()) for x in dates]
     return list(dates)
 
+def objective(x,a,b,c,d):
+    return (a * x) + (b * x**2) + (c * x**3) + d
+
+def obj2(x,a,b,d):
+    return a * np.exp((-x/b)) + d
+    
 if __name__=="__main__":
     print(date_range_lister())
 
