@@ -15,8 +15,15 @@ import sys
 import os
 from utils import date_range_lister
 import numpy as np
+from scipy.fft import fft
 from scipy.optimize import curve_fit
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+try:
+    from symfit import parameters, variables, sin, cos, Fit
+except ImportError:
+    print('please install symfit')
+
 
 # TODO - Write the dox uuuhhhhhh
 # TODO - Write func to update data on increment
@@ -149,7 +156,7 @@ class Strategy:
         pass
 
     def load_data(self,crypto):
-        with open(f'{crypto}.json') as f:
+        with open(f'data\{crypto}.json') as f:
             data = json.loads(json.load(f))
         return pd.DataFrame.from_dict(data['data'])
     
@@ -192,6 +199,38 @@ class Strategy:
             self.res[f"{i}_yhat"] = fitter(data,250,i)[1]
         return self.res
 
+    def fourierExtrapolation(self, x, n_predict):
+        n = x.size
+        n_harm = 50                     # number of harmonics in model
+        t = np.arange(0, n)
+        p = np.polyfit(t, x, 1)         # find linear trend in x
+        x_notrend = x - p[0] * t        # detrended x
+        x_freqdom = fft.fft(x_notrend)  # detrended x in frequency domain
+        f = fft.fftfreq(n)              # frequencies
+        indexes = list(range(n))
+        # sort indexes by frequency, lower -> higher
+        indexes.sort(key=lambda i: np.absolute(x_freqdom[i]))
+        indexes.reverse()
+    
+        t = np.arange(0, n + n_predict)
+        restored_sig = np.zeros(t.size)
+        for i in indexes[:1 + n_harm * 2]:
+            ampli = np.absolute(x_freqdom[i]) / n   # amplitude
+            phase = np.angle(x_freqdom[i])          # phase
+            restored_sig += ampli * np.cos(2 * np.pi * f[i] * t + phase)
+        return restored_sig + p[0] * t
+
+
+    def create_coeff_matrix(self,res):
+            tester = np.array([np.fromiter(v.params.values(),float) for k,v in res.items() if '_result' in k],dtype=object)
+            max_len = max([len(i) for i in tester])
+            last_res = np.array([ np.pad(tester[i],
+                    (0,max_len-len(tester[i])),
+                    'constant',
+                        constant_values=0) for i in range(len(tester))]) # got to make A and B matrix
+            return last_res
+
+
     def plot_result(self):
         if self.window != 0:
             new_res = np.array([self.res[f"{k.split('_')[0]}_yhat"] for k,v in self.res.items()])
@@ -209,13 +248,16 @@ class Strategy:
         return fig
 
 
-
+def main(window,):
+    # main = gck_main() # THIS GETS DATA AND WRITES TO JSON
+    s = Strategy()
+    data = s.load_data('ethereum')
+    fit = s.fit_curve_fourier(data,window)
+    coef_mat = s.create_coeff_matrix(fit)    
+    s.plot_result()
+    return data,coef_mat
+    
 
 if __name__=="__main__":
-    # main = gck_main()
-    # if main==0:
-    #     print('\n','Program Executed Successfully','\n')
-    s = Strategy()
-    data = Strategy().load_data('ethereum')
-    fit = s.fit_curve_fourier(data,250)
-    s.plot_result()
+    main(500)
+    main(5000)
